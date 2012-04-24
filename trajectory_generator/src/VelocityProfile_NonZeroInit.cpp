@@ -50,9 +50,9 @@ void VelocityProfile_NonZeroInit::SetProfile(double pos1, double pos2)
 	// set Time scale to default
 //	timeScale = 1;
 #if DEBUG
-	cout << "2 Parameters Constructor/n Building Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
-	initPos << ") initVel(" << initVel << ") " << endl;
-	cout << "------------------------------------------" << endl;
+	std::cout << "2 Parameters Constructor/n Building Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
+	initPos << ") initVel(" << initVel << ") " << std::endl;
+	std::cout << "------------------------------------------" << std::endl;
 #endif
 	duration = SubProfileBuilder(finalPos, initPos, initVel, finalVel, initTime);
 
@@ -78,9 +78,9 @@ bool VelocityProfile_NonZeroInit::SetProfile(double pos1, double pos2, double _i
 	// set Time scale to default
 //	timeScale = 1;
 #if DEBUG
-	cout << "3 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
-	initPos << ") initVel(" << initVel << ") " << endl;
-	cout << "------------------------------------------" << endl;
+	std::cout << "3 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
+	initPos << ") initVel(" << initVel << ") " << std::endl;
+	std::cout << "------------------------------------------" << std::endl;
 #endif
 	duration = SubProfileBuilder(finalPos, initPos, initVel, finalVel, initTime);
 
@@ -115,9 +115,9 @@ bool VelocityProfile_NonZeroInit::SetProfile(double pos1, double pos2, double _i
 	// set Time scale to default
 //	timeScale = 1;
 #if DEBUG
-	cout << "4 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
-	initPos << ") initVel(" << initVel << ") finalVel(" << finalVel << ")" << endl;
-	cout << "------------------------------------------" << endl;
+	std::cout << "4 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
+	initPos << ") initVel(" << initVel << ") finalVel(" << finalVel << ")" << std::endl;
+	std::cout << "------------------------------------------" << std::endl;
 #endif
 	duration = SubProfileBuilder(finalPos, initPos, initVel, finalVel, initTime);
 
@@ -153,9 +153,9 @@ bool VelocityProfile_NonZeroInit::SetProfile(double pos1, double pos2, double _i
 	// set Time scale to default
 //	timeScale = 1;
 #if DEBUG
-	cout << "4 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
-	initPos << ") initVel(" << initVel << ") finalVel(" << finalVel << ") initTime(" << initTime << ")" << endl;
-	cout << "------------------------------------------" << endl;
+	std::cout << "4 Parameters Constructor/nBuilding Velocity Profile with maxAcc(" << maxAcc << ") maxVel(" << maxVel << ") finalPos(" << finalPos << ") initPos(" <<
+	initPos << ") initVel(" << initVel << ") finalVel(" << finalVel << ") initTime(" << initTime << ")" << std::endl;
+	std::cout << "------------------------------------------" << std::endl;
 #endif
 	duration = SubProfileBuilder(finalPos, initPos, initVel, finalVel, initTime); // Initial time set to zero for new trajectories
 
@@ -200,15 +200,15 @@ double VelocityProfile_NonZeroInit::SubProfileBuilder(double fPos, double iPos, 
 		trajSign = -1.0;
 
 #if DEBUG
-	cout << "======================================" << endl;
-	cout << "trajSign " << trajSign << endl;
-	cout << "iPos " << iPos << endl;
-	cout << "fPos " << fPos << endl;
-	cout << "iVel " << iVel << endl;
-	cout << "fVel " << fVel << endl;
-	cout << "Dp " << Dp << endl;
-	cout << "Dpcrit " << Dpcrit << endl;
-	cout << "meanVel " << meanVel << endl;
+	std::cout << "======================================" << std::endl;
+	std::cout << "trajSign " << trajSign << std::endl;
+	std::cout << "iPos " << iPos << std::endl;
+	std::cout << "fPos " << fPos << std::endl;
+	std::cout << "iVel " << iVel << std::endl;
+	std::cout << "fVel " << fVel << std::endl;
+	std::cout << "Dp " << Dp << std::endl;
+	std::cout << "Dpcrit " << Dpcrit << std::endl;
+	std::cout << "meanVel " << meanVel << std::endl;
 #endif
 
 	// If the initial state is equal to final state: we are at the target!!!
@@ -231,7 +231,7 @@ double VelocityProfile_NonZeroInit::SubProfileBuilder(double fPos, double iPos, 
 		double peakVel = sqrt(trajSign * Dp * maxAcc + (iVel * iVel + fVel * fVel) / 2);
 
 #if DEBUG
-		cout << "peakVel " << peakVel << endl;
+		std::cout << "peakVel " << peakVel << std::endl;
 #endif
 
 		if (peakVel < maxVel)
@@ -258,7 +258,7 @@ double VelocityProfile_NonZeroInit::SubProfileBuilder(double fPos, double iPos, 
 			sp2.push_back(-trajSign * maxAcc);
 			subVelProfiles.push_back(sp2);
 #if DEBUG
-			cout << "T20 " << T20 << endl;
+			std::cout << "T20 " << T20 << std::endl;
 #endif
 
 			tmpDuration = T20 + (fVel - trajSign * peakVel) / (-trajSign * maxAcc);
@@ -302,9 +302,9 @@ double VelocityProfile_NonZeroInit::SubProfileBuilder(double fPos, double iPos, 
 			tmpDuration = T30 + (fVel - trajSign * maxVel) / (-trajSign * maxAcc);
 
 #if DEBUG
-			cout << "T20 " << T20 << endl;
-			cout << "T30 " << T30 << endl;
-			cout << "tmpDuration " << tmpDuration << endl;
+			std::cout << "T20 " << T20 << std::endl;
+			std::cout << "T30 " << T30 << std::endl;
+			std::cout << "tmpDuration " << tmpDuration << std::endl;
 #endif
 			//End of Asymmetric trapezoidal velocity profile
 		}
@@ -336,10 +336,10 @@ double VelocityProfile_NonZeroInit::SubProfileBuilder(double fPos, double iPos, 
 	subVelProfiles.push_back(spSS);
 
 #if DEBUG
-	cout << "maxAcc " << maxAcc << endl;
-	cout << "maxVel " << maxVel << endl;
-	cout << "tmpDuration " << tmpDuration << endl;
-	cout << "======================================" << endl;
+	std::cout << "maxAcc " << maxAcc << std::endl;
+	std::cout << "maxVel " << maxVel << std::endl;
+	std::cout << "tmpDuration " << tmpDuration << std::endl;
+	std::cout << "======================================" << std::endl;
 #endif
 	return tmpDuration;
 }
@@ -350,14 +350,14 @@ void VelocityProfile_NonZeroInit::SetProfileDuration(double newDuration)
 	{
 		synchroTime = duration;
 #if 0
-		cout << "Requested time for synchronization is not valid" << endl;
+		std::cout << "Requested time for synchronization is not valid" << std::endl;
 #endif
 	}
 	else if (finalVel != 0.0)
 	{
 		synchroTime = duration;
 #if 0
-		cout << "Cannot synchronize for vf other than zero" << endl;
+		std::cout << "Cannot synchronize for vf other than zero" << std::endl;
 #endif
 	}
 	//Synchronizing trajectories
@@ -390,21 +390,21 @@ void VelocityProfile_NonZeroInit::SetProfileDuration(double newDuration)
 			{
 				double aux = maxAcc * synchroTime + trajSign * initVel;
 				constVel = 0.5 * (aux - sqrt(aux * aux - 4 * trajSign * maxAcc * (finalPos - initPos) - 2 * initVel * initVel));
-				//				cout << "Trapezoidal synchronized trajectory" << endlog();
+				//				std::cout << "Trapezoidal synchronized trajectory" << endlog();
 			}
 			else
 			{
 				constVel = (trajSign * (finalPos - initPos) - 0.5 * initVel * initVel / maxAcc)
 						/ (synchroTime - initVel / (trajSign * maxAcc));
-				//				cout << "Double ramp synchronized trajectory" << endlog();
+				//				std::cout << "Double ramp synchronized trajectory" << endlog();
 			}
 
 #if DEBUG
-			cout << "trajSign " << trajSign << endl;
-			cout << "syncSign " << syncSign << endl;
-			cout << "synchroTime " << synchroTime << endl;
-			cout << "constVel " << constVel << endl;
-			cout << "maxAcc " << maxAcc << endl;
+			std::cout << "trajSign " << trajSign << std::endl;
+			std::cout << "syncSign " << syncSign << std::endl;
+			std::cout << "synchroTime " << synchroTime << std::endl;
+			std::cout << "constVel " << constVel << std::endl;
+			std::cout << "maxAcc " << maxAcc << std::endl;
 
 #endif
 
@@ -455,38 +455,38 @@ void VelocityProfile_NonZeroInit::SetProfileDuration(double newDuration)
 	}
 
 #if DEBUG
-	cout << "Synchronized trajectory" << endl;
-	cout << "=======================" << endl;
-	cout << "fPos " << finalPos << " iPos " << initPos << " iVel " << initVel << endl;
+	std::cout << "Synchronized trajectory" << std::endl;
+	std::cout << "=======================" << std::endl;
+	std::cout << "fPos " << finalPos << " iPos " << initPos << " iVel " << initVel << std::endl;
 	if(abs(finalPos-initPos) > epsilon || abs(initVel) > epsilon )
 	{
 		int i;
 		for( i = 0; i<(int)subVelProfiles.size()-1; i++ )
 		{
-			cout << "Trajectory piece " << i << endl;
-			cout << "------------------" << endl;
-			cout << "initTime: " << subVelProfiles[i][0] << "; initPos: " << subVelProfiles[i][1] << "; initVel: "
-			<< subVelProfiles[i][2] << "; initAcc: " << subVelProfiles[i][3] << endl;
-			cout << "finalTime: " << subVelProfiles[i+1][0] << "; finalPos: " << Pos(subVelProfiles[i+1][0]-0.001) << "; finalVel: "
-			<< Vel(subVelProfiles[i+1][0]-0.001) << "; finalAcc: " << Acc(subVelProfiles[i+1][0]-0.001) << endl;
+			std::cout << "Trajectory piece " << i << std::endl;
+			std::cout << "------------------" << std::endl;
+			std::cout << "initTime: " << subVelProfiles[i][0] << "; initPos: " << subVelProfiles[i][1] << "; initVel: "
+			<< subVelProfiles[i][2] << "; initAcc: " << subVelProfiles[i][3] << std::endl;
+			std::cout << "finalTime: " << subVelProfiles[i+1][0] << "; finalPos: " << Pos(subVelProfiles[i+1][0]-0.001) << "; finalVel: "
+			<< Vel(subVelProfiles[i+1][0]-0.001) << "; finalAcc: " << Acc(subVelProfiles[i+1][0]-0.001) << std::endl;
 		}
-		cout << "Trajectory piece " << i << endl;
-		cout << "------------------" << endl;
-		cout << "initTime: " << subVelProfiles[i][0] << "; initPos: " << subVelProfiles[i][1] << "; initVel: "
-		<< subVelProfiles[i][2] << "; initAcc: " << subVelProfiles[i][3] << endl;
-		cout << "Final values" << endl;
-		cout << "------------" << endl;
-		cout << "finalTime: " << synchroTime << "; finalPos: " << Pos(synchroTime) << "; finalVel: "
-		<< Vel(synchroTime) << "; finalAcc: " << Acc(synchroTime) << endl;
+		std::cout << "Trajectory piece " << i << std::endl;
+		std::cout << "------------------" << std::endl;
+		std::cout << "initTime: " << subVelProfiles[i][0] << "; initPos: " << subVelProfiles[i][1] << "; initVel: "
+		<< subVelProfiles[i][2] << "; initAcc: " << subVelProfiles[i][3] << std::endl;
+		std::cout << "Final values" << std::endl;
+		std::cout << "------------" << std::endl;
+		std::cout << "finalTime: " << synchroTime << "; finalPos: " << Pos(synchroTime) << "; finalVel: "
+		<< Vel(synchroTime) << "; finalAcc: " << Acc(synchroTime) << std::endl;
 	}
 	else
 	{
-		cout << "Trajectory piece 0" << endl;
-		cout << "------------------" << endl;
-		cout << "Begin of printing" << endl;
-		cout << "initTime: " << subVelProfiles[0][0] << "; initPos: " << subVelProfiles[0][1] << "; initVel: "
-		<< subVelProfiles[0][2] << "; initAcc: " << subVelProfiles[0][3] << endl;
-		cout << "End of printing" << endl;
+		std::cout << "Trajectory piece 0" << std::endl;
+		std::cout << "------------------" << std::endl;
+		std::cout << "Begin of printing" << std::endl;
+		std::cout << "initTime: " << subVelProfiles[0][0] << "; initPos: " << subVelProfiles[0][1] << "; initVel: "
+		<< subVelProfiles[0][2] << "; initAcc: " << subVelProfiles[0][3] << std::endl;
+		std::cout << "End of printing" << std::endl;
 	}
 #endif
 	return;
@@ -499,7 +499,7 @@ void VelocityProfile_NonZeroInit::SetProfileDuration(double pos1, double pos2, d
 	{
 		synchroTime = duration;
 #if DEBUG
-		cout << "Requested time for synchronization is not valid" << endl;
+		std::cout << "Requested time for synchronization is not valid" << std::endl;
 #endif
 	}
 	else

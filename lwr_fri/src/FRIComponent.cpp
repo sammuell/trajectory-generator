@@ -41,7 +41,7 @@ namespace lwr_fri {
 using namespace RTT;
 
 FRIComponent::FRIComponent(const std::string& name) :
-	TaskContext(name, PreOperational){
+	TaskContext(name, PreOperational), updateGenerator("update") {
 
 	this->addAttribute("fromKRL", m_fromKRL);
 	this->addAttribute("toKRL", m_toKRL);
@@ -77,6 +77,8 @@ FRIComponent::FRIComponent(const std::string& name) :
 	m_jntVel.resize(LBR_MNJ);
 	m_jntTorques.resize(LBR_MNJ);
 
+	// the trajectory generator and the FRIComponent are connected using connectServices()
+	this->requires("trajectory_generator")->addOperationCaller(updateGenerator);
 }
 
 FRIComponent::~FRIComponent() {
@@ -116,6 +118,7 @@ bool FRIComponent::configureHook() {
 		return false;
 	}
 
+	/*
 	//Add trajectoryGenerator as peer
 	if(this->hasPeer("trajectoryGenerator")){
 		updateGenerator = this->getPeer("trajectoryGenerator")->getOperation("updateTG");
@@ -124,9 +127,13 @@ bool FRIComponent::configureHook() {
 	if(this->hasPeer("cartesianGenerator")){
 		updateGenerator = this->getPeer("cartesianGenerator")->getOperation("updateCG");
 	}
+  */
+
+	if (this->hasPeer("trajectoryGenerator")) {
+		this->connectServices(this->getPeer("trajectoryGenerator"));
+	}
 
 	return true;
-
 }
 
 bool FRIComponent::startHook() {
@@ -256,18 +263,17 @@ void FRIComponent::updateHook() {
 		if (m_msr_data.intf.state == FRI_STATE_CMD) {
 			if (m_control_mode == 1) {
 				m_cmd_data.cmd.cmdFlags = FRI_CMD_JNTPOS;
-				if(updateGenerator()){
+				if (updateGenerator()) {
 					if (NewData == m_jntPosPort.read(m_jntPos))
 						for (unsigned int i = 0; i < LBR_MNJ; i++)
 							m_cmd_data.cmd.jntPos[i] = m_jntPos[i];
 //					std::cout << "FRI: "<< m_jntPos[0] << " " << m_jntPos[1] << " " << m_jntPos[2] << " "
 //							<< m_jntPos[3] << " " << m_jntPos[4] << " " << m_jntPos[5] << " "
 //							<< m_jntPos[6] << std::endl;
-				}else{
+				} else {
 					for (unsigned int i = 0; i < LBR_MNJ; i++)
-						m_cmd_data.cmd.jntPos[i] = m_jntPos[i];
+						m_cmd_data.cmd.jntPos[i] = m_msr_data.data.cmdJntPos[i];
 				}
-
 
 			} else	if (m_control_mode == 2) {
 				m_cmd_data.cmd.cmdFlags = FRI_CMD_JNTPOS;

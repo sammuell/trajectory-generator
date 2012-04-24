@@ -61,7 +61,7 @@ TrajectoryGenerator::TrajectoryGenerator(std::string name) :
 	this->addProperty("doSync", doSync).doc("Do synchronization");
 	this->addProperty("addFinalVel", addFinalVel).doc("Incorporate final velocities");
 
-	this->addOperation("updateTG", &TrajectoryGenerator::updateTG, this, OwnThread);
+	this->provides("trajectory_generator")->addOperation("update", &TrajectoryGenerator::updateTG, this, OwnThread);
 
 	lastCommandedPoseJntPos = std::vector<double>(7, 0.0);
 	lastCommandedPoseJntVel = std::vector<double>(7, 0.0);
@@ -196,6 +196,8 @@ bool TrajectoryGenerator::generateNewVelocityProfilesJntPosInput(RTT::base::Port
 
 	time_passed = os::TimeService::Instance()->secondsSince(time_begin);
 
+	//Set times
+	time_begin = os::TimeService::Instance()->getTicks();
 #if DEBUG
 	cout << "a new jnt pose arrived" << endl;
 #endif
@@ -254,19 +256,26 @@ bool TrajectoryGenerator::generateNewVelocityProfilesJntPosInput(RTT::base::Port
 			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i]);
 		else
 			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i], lastCommandedPoseJntVel[i]);
+		cout << "duration link " << i << ": " << motionProfile[i].Duration() << endl;
 		if (motionProfile[i].Duration() > maxDuration)
 			maxDuration = motionProfile[i].Duration();
+
+		cout << "profile " << i << " duration: " << motionProfile[i].Duration() << endl;
 	}
 
 	timeLogger << maxDuration << endl;
+	cout << "max duration: " << maxDuration << endl;
 
 	//Do sync
 	if (doSync)
 	{
+		cout << "synchronized motion, adjusting profiles... ";
 		for (int i = 0; i < (int)lastCommandedPoseJntPos.size(); i++)
 		{
 			motionProfile[i].SetProfileDuration(maxDuration);
+			cout << motionProfile[i].Duration() << ", ";
 		}
+		cout << endl;
 	}
 
 	//Set times
@@ -280,6 +289,7 @@ bool TrajectoryGenerator::generateNewVelocityProfilesJntPosInput(RTT::base::Port
 
 bool TrajectoryGenerator::updateTG(void)
 {
+	cout << "TrajectoryGenerator::updateTG called..." << endl;
 	if (motionProfile.size() == 7)
 	{
 		time_passed = os::TimeService::Instance()->secondsSince(time_begin);
@@ -293,6 +303,9 @@ bool TrajectoryGenerator::updateTG(void)
 			jntState.position.push_back(motionProfile[i].Pos(time_passed));
 		}
 		output_jntPosPort_toROS.write(jntState);
+
+		cout << time_passed << ": " << jntPosCmd[0] << " " << jntPosCmd[1] << " " << jntPosCmd[2] << " " << jntPosCmd[3]
+				<< " " << jntPosCmd[4] << " " << jntPosCmd[5] << " " << jntPosCmd[6] << endl;
 #if DEBUG
 		log(Info) << jntPosCmd[0] << " " << jntPosCmd[1] << " " << jntPosCmd[2] << " "
 		<< jntPosCmd[3] << " " << jntPosCmd[4] << " " << jntPosCmd[5] << " "
@@ -309,7 +322,7 @@ bool TrajectoryGenerator::updateTG(void)
 
 void TrajectoryGenerator::updateHook()
 {
-	updateTG();
+	//updateTG();
 }
 
 void TrajectoryGenerator::stopHook()

@@ -113,7 +113,7 @@ private:
 	RTT::os::TimeService::ticks	time_begin;
 	RTT::os::TimeService::Seconds	time_passed;
 
-	RTT::OperationCaller<bool(void)> updateGenerator;
+	RTT::OperationCaller<bool(void)> updateGenerator; // this variable is initialized in the constructor initialization list
 //	RTT::OperationCaller<bool(void)> updateCG;
 };
 
