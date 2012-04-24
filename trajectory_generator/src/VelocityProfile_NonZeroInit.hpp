@@ -1,11 +1,11 @@
 /***************************************************************************
 
-    File:           KukaLWR_Kinematics.hpp
-    Author(s):      Gajamohan Mohanarajah/Francisco Ramos
-    Affiliation:    IDSC - ETH Zurich
-    e-mail:         gajan@ethz.ch/framosde@ethz.ch
-    Start date:	    11th April 2011
-    Last update:	11th May 2011
+ File:           KukaLWR_Kinematics.hpp
+ Author(s):      Gajamohan Mohanarajah/Francisco Ramos
+ Affiliation:    IDSC - ETH Zurich
+ e-mail:         gajan@ethz.ch/framosde@ethz.ch
+ Start date:	    11th April 2011
+ Last update:	11th May 2011
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -69,135 +69,134 @@ namespace trajectory_generator
 using namespace RTT;
 using namespace KDL;
 
-	/**
-	 * \brief A VelocityProfile with non-zero initial velocity implementation.
+/**
+ * \brief A VelocityProfile with non-zero initial velocity implementation.
+ */
+class VelocityProfile_NonZeroInit : public VelocityProfile
+{
+
+private:
+	//! Tolerence used to detect null trajectories
+	static const double epsilon = 0.0001;
+
+	/** It is a vector of SubProfiles, each of them with the coefficients
+	 *  of a polynomial corresponding to that piece of the profile
 	 */
-    class VelocityProfile_NonZeroInit : public VelocityProfile
-    {
+	std::vector<std::vector<double> > subVelProfiles;
 
-    private:
-        //! Tolerence used to detect null trajectories        
-        static const double epsilon  = 0.0001;
-        
-        /** It is a vector of SubProfiles, each of them with the coefficients
-         *  of a polynomial corresponding to that piece of the profile
-         */
-        std::vector< std::vector<double> > subVelProfiles;
-
-        //! Time-optimal calculated duration of maneuver
-        double duration;
-        //! Time scale when a longer than time-optimal duration is required (synchronization)
+	//! Time-optimal calculated duration of maneuver
+	double duration;
+	//! Time scale when a longer than time-optimal duration is required (synchronization)
 //        double timeScale;
-        double synchroTime;
+	double synchroTime;
 
-        //! Sign of the trajectory
-        double trajSign;
-        //! Sign of synchronization. Distinguishes between trap and double ramp profiles
-        double syncSign;
+	//! Sign of the trajectory
+	double trajSign;
+	//! Sign of synchronization. Distinguishes between trap and double ramp profiles
+	double syncSign;
 
-        //! Maximum velocity achievable by the robot
-        double maxVel;
-        //! Maximum acceleration achievable by the robot
-        double maxAcc;
-        //! Initial position of the joint
-        double initPos;
-        //! Desired final position of the joint
-        double finalPos;
-        //! Velocity of the joint when maneuver starts
-        double initVel;
-        //! Velocity of the joint when maneuver finishes
-        double finalVel;
-        //! Beginning time of the manuever
-        double initTime;
+	//! Maximum velocity achievable by the robot
+	double maxVel;
+	//! Maximum acceleration achievable by the robot
+	double maxAcc;
+	//! Initial position of the joint
+	double initPos;
+	//! Desired final position of the joint
+	double finalPos;
+	//! Velocity of the joint when maneuver starts
+	double initVel;
+	//! Velocity of the joint when maneuver finishes
+	double finalVel;
+	//! Beginning time of the manuever
+	double initTime;
 
-        //! Private method for creating the subprofiles of the trajectory
-        // Method for creating subprofiles
-        double SubProfileBuilder(double finalPos, double initPos, double initVel, double finalVel, double initTime);
+	//! Private method for creating the subprofiles of the trajectory
+	// Method for creating subprofiles
+	double SubProfileBuilder(double finalPos, double initPos, double initVel, double finalVel, double initTime);
 
+public:
+	//! Constructs motion profile class with \p _maxvel and \p _maxacc as parameters of the trajectory
+	VelocityProfile_NonZeroInit(double _maxvel = 0, double _maxacc = 0);
 
-    public:
-        //! Constructs motion profile class with \p _maxvel and \p _maxacc as parameters of the trajectory
-        VelocityProfile_NonZeroInit(double _maxvel=0, double _maxacc=0);
+	// We add several interfaces. A non-passed argument is considered 0.0
+	/** \brief Complete profile definition.
+	 *
+	 *  \param pos1 Initial position of the trajectory (should be actual robot position)
+	 *  \param pos2 Final desired position of the trajectory
+	 *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
+	 *  \param _finalvel Must be smaller than \p _maxvel assigned in the constructor
+	 *  \param _initime Must not be negative (and tipically zero)
+	 */
+	bool SetProfile(double pos1, double pos2, double _inivel, double _finalvel, double _initime);
+	/** \brief Profile definition. Initial time of trajectory is assumed to be zero.
+	 *
+	 *  \param pos1 Initial position of the trajectory (should be actual robot position)
+	 *  \param pos2 Final desired position of the trajectory
+	 *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
+	 *  \param _finalvel Must be smaller than \p _maxvel assigned in the constructor
+	 */
+	bool SetProfile(double pos1, double pos2, double _inivel, double _finalvel);
+	/** \brief Profile definition. Initial time of trajectory is assumed to be zero.
+	 *
+	 *  \param pos1 Initial position of the trajectory (should be actual robot position)
+	 *  \param pos2 Final desired position of the trajectory
+	 *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
+	 */
+	bool SetProfile(double pos1, double pos2, double _inivel);
+	/** \brief Interface for changing the profile duration.
+	 *
+	 *  \param newDuration The new duration assigned to the trajectory must be greater
+	 *  than the optimal time
+	 *  \todo Not implemented yet
+	 */
+	void SetProfileDuration(double newDuration);
 
-        // We add several interfaces. A non-passed argument is considered 0.0
-        /** \brief Complete profile definition.
-         *
-         *  \param pos1 Initial position of the trajectory (should be actual robot position)
-         *  \param pos2 Final desired position of the trajectory
-         *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
-         *  \param _finalvel Must be smaller than \p _maxvel assigned in the constructor
-         *  \param _initime Must not be negative (and tipically zero)
-         */
-	    bool SetProfile(double pos1,double pos2, double _inivel, double _finalvel, double _initime);
-        /** \brief Profile definition. Initial time of trajectory is assumed to be zero.
-         *
-         *  \param pos1 Initial position of the trajectory (should be actual robot position)
-         *  \param pos2 Final desired position of the trajectory
-         *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
-         *  \param _finalvel Must be smaller than \p _maxvel assigned in the constructor
-         */
-	    bool SetProfile(double pos1,double pos2, double _inivel, double _finalvel);
-        /** \brief Profile definition. Initial time of trajectory is assumed to be zero.
-         *
-         *  \param pos1 Initial position of the trajectory (should be actual robot position)
-         *  \param pos2 Final desired position of the trajectory
-         *  \param _inivel Must be smaller than \p _maxvel assigned in the constructor
-         */
-	    bool SetProfile(double pos1,double pos2, double _inivel);
-	    /** \brief Interface for changing the profile duration.
-	     *
-	     *  \param newDuration The new duration assigned to the trajectory must be greater
-	     *  than the optimal time
-	     *  \todo Not implemented yet
-	     */
-	    void SetProfileDuration(double newDuration);
+	// These are added for compatibility with KDL::VelocityProfile
+	/** \brief Profile definition. Initial time and velocity of trajectory are assumed to be zero
+	 *
+	 *  \note Added for compatibility with VelocityProfile Class
+	 */
+	virtual void SetProfile(double pos1, double pos2);
+	/** \brief Interface for changing the profile duration.
+	 *
+	 *  \param pos1 Initial position of the trajectory (should be actual robot position)
+	 *  \param pos2 Final desired position of the trajectory
+	 *  \param newduration The new duration assigned to the trajectory must be greater
+	 *  than the optimal time
+	 *  \note Added for compatibility with VelocityProfile Class.
+	 *   \p pos1 and \p pos2 are not used. A previous call to SetProfile is required
+	 */
+	virtual void SetProfileDuration(double pos1, double pos2, double newduration);
 
-	    // These are added for compatibility with KDL::VelocityProfile
-        /** \brief Profile definition. Initial time and velocity of trajectory are assumed to be zero
-         *
-         *  \note Added for compatibility with VelocityProfile Class
-         */
-	    virtual void SetProfile(double pos1, double pos2);
-        /** \brief Interface for changing the profile duration.
-         *
-         *  \param pos1 Initial position of the trajectory (should be actual robot position)
-         *  \param pos2 Final desired position of the trajectory
- 	     *  \param newduration The new duration assigned to the trajectory must be greater
-	     *  than the optimal time
-         *  \note Added for compatibility with VelocityProfile Class.
-         *   \p pos1 and \p pos2 are not used. A previous call to SetProfile is required
-         */
-	    virtual void SetProfileDuration(double pos1, double pos2, double newduration);
+	//! Changes the maximum values for velocity and acceleration
+	virtual void SetMax(double _maxvel, double _maxacc);
+	/** \brief Returns the calculated duration of the maneuver.
+	 *
+	 *  If a different from optimal duration has been set, it gives back the new set value.
+	 */
+	virtual double Duration() const;
+	/** \brief Returns the calculated desired position of the maneuver at a certaint \p time.
+	 *
+	 *  If \p time is higher than \p duration then final desired position is returned.
+	 */
+	virtual double Pos(double time) const;
+	/** \brief Returns the calculated desired velocity of the maneuver at a certaint \p time.
+	 *
+	 *  If \p time is higher than \p duration then 0.0 is returned.
+	 */
+	virtual double Vel(double time) const;
+	/** \brief Returns the calculated desired acceleration of the maneuver at a certaint \p time.
+	 *
+	 *  If \p time is higher than \p duration then 0.0 is returned.
+	 */
+	virtual double Acc(double time) const;
+	//! Writes the kind of trajectory in the stream \p os
+	virtual void Write(std::ostream& os) const;
+	//! Returns copy of current VelocityProfile object. (virtual constructor)
+	virtual VelocityProfile* Clone() const;
+	~VelocityProfile_NonZeroInit();
 
-	    //! Changes the maximum values for velocity and acceleration
-	    virtual void SetMax(double _maxvel,double _maxacc);
-	    /** \brief Returns the calculated duration of the maneuver.
-	     *
-	     *  If a different from optimal duration has been set, it gives back the new set value.
-	     */
-	    virtual double Duration() const;
-	    /** \brief Returns the calculated desired position of the maneuver at a certaint \p time.
-	     *
-	     *  If \p time is higher than \p duration then final desired position is returned.
-	     */
-	    virtual double Pos(double time) const;
-	    /** \brief Returns the calculated desired velocity of the maneuver at a certaint \p time.
-	     *
-	     *  If \p time is higher than \p duration then 0.0 is returned.
-	     */
-	    virtual double Vel(double time) const;
-	    /** \brief Returns the calculated desired acceleration of the maneuver at a certaint \p time.
-	     *
-	     *  If \p time is higher than \p duration then 0.0 is returned.
-	     */
-	    virtual double Acc(double time) const;
-	    //! Writes the kind of trajectory in the stream \p os
-	    virtual void Write(std::ostream& os) const;
-	    //! Returns copy of current VelocityProfile object. (virtual constructor)
-	    virtual VelocityProfile* Clone() const;
-	    ~VelocityProfile_NonZeroInit();
-
-    };
+};
 
 } //end of namespace
 

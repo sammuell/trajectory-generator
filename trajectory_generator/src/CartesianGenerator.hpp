@@ -44,86 +44,85 @@ using namespace Eigen;
 using namespace std;
 namespace trajectory_generator
 {
-    /**
-     * This class implements a TaskContext that creates a path in
-     * Cartesian space between the current cartesian position and a
-     * new desired cartesian position. It uses trapezoidal
-     * velocity-profiles for every dof using a maximum velocity and a
-     * maximum acceleration. It generates frame and twist setpoints
-     * which can be used by OCL::CartesianControllerPos,
-     * OCL::CartesianControllerPosVel or OCL::CartesianControllerVel.
-     *
-     */
-    class CartesianGenerator : public RTT::TaskContext
-    {
-    public:
-        /**
-         * Constructor of the class.
-         *
-         * @param name name of the TaskContext
-         */
-    	CartesianGenerator(std::string name);
-        virtual ~CartesianGenerator();
+/**
+ * This class implements a TaskContext that creates a path in
+ * Cartesian space between the current cartesian position and a
+ * new desired cartesian position. It uses trapezoidal
+ * velocity-profiles for every dof using a maximum velocity and a
+ * maximum acceleration. It generates frame and twist setpoints
+ * which can be used by OCL::CartesianControllerPos,
+ * OCL::CartesianControllerPosVel or OCL::CartesianControllerVel.
+ *
+ */
+class CartesianGenerator : public RTT::TaskContext
+{
+public:
+	/**
+	 * Constructor of the class.
+	 *
+	 * @param name name of the TaskContext
+	 */
+	CartesianGenerator(std::string name);
+	virtual ~CartesianGenerator();
 
-        virtual bool configureHook();
-        virtual bool startHook();
-        virtual void updateHook();
-        virtual void stopHook();
-        virtual void cleanupHook();
-        bool updateCG();
+	virtual bool configureHook();
+	virtual bool startHook();
+	virtual void updateHook();
+	virtual void stopHook();
+	virtual void cleanupHook();
+	bool updateCG();
 
-    private:
-      //bool moveTo(geometry_msgs::Pose pose, double time=0);
-      bool generateNewVelocityProfiles(RTT::base::PortInterface* portInterface);
-      void resetPosition();
+private:
+	//bool moveTo(geometry_msgs::Pose pose, double time=0);
+	bool generateNewVelocityProfiles(RTT::base::PortInterface* portInterface);
+	void resetPosition();
 
-      KDL::Frame                        m_traject_end, m_traject_begin;
-      KDL::Frame                        m_position_desi_local;
-      KDL::Twist                        m_velocity_desi_local, m_velocity_begin_end, m_velocity_delta;
-      std::vector<double>				m_maximum_velocity, m_maximum_acceleration;
+	KDL::Frame m_traject_end, m_traject_begin;
+	KDL::Frame m_position_desi_local;
+	KDL::Twist m_velocity_desi_local, m_velocity_begin_end, m_velocity_delta;
+	std::vector<double> m_maximum_velocity, m_maximum_acceleration;
 
-      std::vector<VelocityProfile_NonZeroInit> 		motionProfile;
-      RTT::os::TimeService::ticks					m_time_begin;
-      RTT::os::TimeService::Seconds					m_time_passed;
-      double										m_max_duration;
+	std::vector<VelocityProfile_NonZeroInit> motionProfile;
+	RTT::os::TimeService::ticks m_time_begin;
+	RTT::os::TimeService::Seconds m_time_passed;
+	double m_max_duration;
 
-      Vector3d										currentRotationalAxis;
-      double										deltaTheta;
+	Vector3d currentRotationalAxis;
+	double deltaTheta;
 
-      double t_sync;
-      double theta_vel;
-      double xi,yi,zi,xf,yf,zf;
-      double TrajVectorMagnitude;
-      struct VectorDirection
-      {
-    	  double x;
-    	  double y;
-    	  double z;
-      } TrajVectorDirection;
+	double t_sync;
+	double theta_vel;
+	double xi, yi, zi, xf, yf, zf;
+	double TrajVectorMagnitude;
+	struct VectorDirection
+	{
+		double x;
+		double y;
+		double z;
+	} TrajVectorDirection;
 
-      bool move_robot;
-      bool position_ready;
-      bool orientation_ready;
-      bool pose_ready;
-      geometry_msgs::Pose desired_pose;
+	bool move_robot;
+	bool position_ready;
+	bool orientation_ready;
+	bool pose_ready;
+	geometry_msgs::Pose desired_pose;
 
+protected:
+	/// Dataport containing the current measured end-effector
+	/// frame, shared with OCL::CartesianSensor
+	RTT::InputPort<geometry_msgs::Pose> m_position_meas_port;
 
+	RTT::InputPort<geometry_msgs::Pose> cmdCartPose;
 
-    protected:
-      /// Dataport containing the current measured end-effector
-      /// frame, shared with OCL::CartesianSensor
-      RTT::InputPort< geometry_msgs::Pose >   		m_position_meas_port;
+	RTT::OutputPort<geometry_msgs::PoseStamped> m_position_desi_port2ROS;
 
-      RTT::InputPort< geometry_msgs::Pose > cmdCartPose;
+	/// Dataport containing the current desired end-effector
+	/// frame, shared with OCL::CartesianControllerPos,
+	/// OCL::CartesianControllerPosVel
+	RTT::OutputPort<geometry_msgs::Pose> m_position_desi_port;
 
-      RTT::OutputPort<geometry_msgs::PoseStamped > 	m_position_desi_port2ROS;
+	//RTT::OutputPort<bool> m_move_finished_port;
 
-      /// Dataport containing the current desired end-effector
-      /// frame, shared with OCL::CartesianControllerPos,
-      /// OCL::CartesianControllerPosVel
-      RTT::OutputPort< geometry_msgs::Pose >  		m_position_desi_port;
-
-      //RTT::OutputPort<bool> m_move_finished_port;
-
-  }; // class
+};
+// class
 }//namespace

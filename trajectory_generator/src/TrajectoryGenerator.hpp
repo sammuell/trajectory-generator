@@ -1,11 +1,11 @@
 /***************************************************************************
 
-    File:           TrajectoryGenerator.hpp
-    Author(s):      Gajamohan Mohanarajah/Francisco Ramos
-    Affiliation:    IDSC - ETH Zurich
-    e-mail:         gajan@ethz.ch/framosde@ethz.ch
-    Start date:	    7th April 2011
-    Last update:    11th May 2011
+ File:           TrajectoryGenerator.hpp
+ Author(s):      Gajamohan Mohanarajah/Francisco Ramos
+ Affiliation:    IDSC - ETH Zurich
+ e-mail:         gajan@ethz.ch/framosde@ethz.ch
+ Start date:	    7th April 2011
+ Last update:    11th May 2011
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -69,107 +69,106 @@
 
 namespace trajectory_generator
 {
-    /**
-     * \brief Trajectory Generator OROCOS component extends TaskContext from RTT
-     *
-     */
-    class TrajectoryGenerator : public RTT::TaskContext
-    {
-    private:
-    	/**
-    	 * \brief Check validity of velocities and scale them if necessary
-    	 *
-    	 * @param sensor_msgs::JointState robotState desired state of the system
-    	 *
-    	 * @output int value that gives out one of the following values
-    	 *         0 Velocities are OK
-    	 *         1 Velocities have been modified to be within the limits
-    	 *        -1 There was an error: output values are not valid
-    	 */
-    	int jntVelScaling(sensor_msgs::JointState (&robotState));
-    	double maxDuration;
+/**
+ * \brief Trajectory Generator OROCOS component extends TaskContext from RTT
+ *
+ */
+class TrajectoryGenerator : public RTT::TaskContext
+{
+private:
+	/**
+	 * \brief Check validity of velocities and scale them if necessary
+	 *
+	 * @param sensor_msgs::JointState robotState desired state of the system
+	 *
+	 * @output int value that gives out one of the following values
+	 *         0 Velocities are OK
+	 *         1 Velocities have been modified to be within the limits
+	 *        -1 There was an error: output values are not valid
+	 */
+	int jntVelScaling(sensor_msgs::JointState (&robotState));
+	double maxDuration;
 
-    public:
-        /**
-         * \brief Constructor of the TrajectoryGenerator class.
-         *
-         * @param name name of the TaskContext
-         */
-        TrajectoryGenerator(std::string name);
-        /**
-         * \brief Destructor of the TrajectoryGenerator class.
-         */
-        virtual ~TrajectoryGenerator();
+public:
+	/**
+	 * \brief Constructor of the TrajectoryGenerator class.
+	 *
+	 * @param name name of the TaskContext
+	 */
+	TrajectoryGenerator(std::string name);
+	/**
+	 * \brief Destructor of the TrajectoryGenerator class.
+	 */
+	virtual ~TrajectoryGenerator();
 
-        virtual bool configureHook();
-        virtual bool startHook();
-        virtual void updateHook();
-        virtual void stopHook();
-        virtual void cleanupHook();
+	virtual bool configureHook();
+	virtual bool startHook();
+	virtual void updateHook();
+	virtual void stopHook();
+	virtual void cleanupHook();
 
+	/** \brief function handle for the input_jntPosPort
+	 *
+	 *  \param portInterface
+	 */
+	bool generateNewVelocityProfilesJntPosInput(RTT::base::PortInterface* portInterface);
 
-      /** \brief function handle for the input_jntPosPort
-      	*
-      	*  \param portInterface
-      	*/
-      bool generateNewVelocityProfilesJntPosInput(RTT::base::PortInterface* portInterface);
+	bool updateTG(void);
 
-      bool updateTG(void);
+	unsigned int num_axes;
 
-      unsigned int num_axes;
+	///@{
+	/**
+	 * @brief Maximum velocity, acceleration and the position range of each rotational joint of the Robot
+	 */
+	std::vector<double> v_max, a_max, p_max, p_min;
+	///@}
 
-      ///@{
-      /**
-       * @brief Maximum velocity, acceleration and the position range of each rotational joint of the Robot
-       */
-           std::vector<double> v_max, a_max, p_max, p_min;
-      ///@}
+	std::vector<VelocityProfile_NonZeroInit> motionProfile;
 
-      std::vector<VelocityProfile_NonZeroInit> motionProfile;
+	RTT::os::TimeService::ticks time_begin;
+	RTT::os::TimeService::Seconds time_passed;
 
-      RTT::os::TimeService::ticks	time_begin;
-      RTT::os::TimeService::Seconds	time_passed;
+	///@{
+	/**
+	 * @brief Commands from the event(input) port
+	 */
+	std::vector<double> jntPosCmd;
+	sensor_msgs::JointState cmdJntState;
+	///@}
 
-      ///@{
-      /**
-       * @brief Commands from the event(input) port
-       */
-      std::vector<double> jntPosCmd;
-      sensor_msgs::JointState cmdJntState;
-      ///@}
+	///@{
+	/**
+	 * @brief intermediate command variables
+	 */
+	std::vector<double> lastCommandedPoseJntPos;
+	std::vector<double> lastCommandedPoseJntVel;
+	geometry_msgs::Pose lastCommandedPose;
+	///@}
 
-      ///@{
-      /**
-       * @brief intermediate command variables
-       */
-      std::vector<double> lastCommandedPoseJntPos;
-      std::vector<double> lastCommandedPoseJntVel;
-      geometry_msgs::Pose lastCommandedPose;
-      ///@}
+	/// Initial joint velocities of each rotational joint of the Robot
+	std::vector<double> jntPos;
+	std::vector<double> jntVel;
 
-      /// Initial joint velocities of each rotational joint of the Robot
-      std::vector<double> jntPos;
-      std::vector<double> jntVel;
+	/// joint state going out on output_jntPosPort_toROS port
+	sensor_msgs::JointState jntState;
 
-      /// joint state going out on output_jntPosPort_toROS port
-      sensor_msgs::JointState jntState;
+	bool doSync, addFinalVel;
 
-      bool doSync, addFinalVel;
+protected:
+	/// Dataport containing commanded Cartesian pose
+	RTT::InputPort<geometry_msgs::Pose> input_cartPosPort;
+	/// Dataport containing commanded joint position
+	RTT::InputPort<sensor_msgs::JointState> input_jntPosPort;
+	/// Dataport containing the measured joint angles from the Robot
+	RTT::InputPort<std::vector<double> > msr_jntPosPort;
+	/// Dataport containing the desired joint angles
+	RTT::OutputPort<std::vector<double> > output_jntPosPort;
+	/// Dataport containing the desired joint angles (In s)
+	RTT::OutputPort<sensor_msgs::JointState> output_jntPosPort_toROS;
 
+	std::ofstream timeLogger;
 
-    protected:
-      /// Dataport containing commanded Cartesian pose
-      RTT::InputPort< geometry_msgs::Pose > input_cartPosPort;
-      /// Dataport containing commanded joint position
-      RTT::InputPort< sensor_msgs::JointState > input_jntPosPort;
-      /// Dataport containing the measured joint angles from the Robot
-      RTT::InputPort< std::vector<double> > msr_jntPosPort;
-      /// Dataport containing the desired joint angles
-      RTT::OutputPort< std::vector<double> >  output_jntPosPort;
-      /// Dataport containing the desired joint angles (In s)
-      RTT::OutputPort< sensor_msgs::JointState >  output_jntPosPort_toROS;
-
-      std::ofstream timeLogger;
-
-  }; // class
+};
+// class
 }//namespace

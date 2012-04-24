@@ -1,11 +1,11 @@
 /***************************************************************************
 
-    File:           TrajectoryGenerator.cpp
-    Author(s):      Gajamohan Mohanarajah/Francisco Ramos
-    Affiliation:    IDSC - ETH Zurich
-    e-mail:         gajan@ethz.ch/framosde@ethz.ch
-    Start date:	    7th April 2011
-    Last update:    11th May 2011
+ File:           TrajectoryGenerator.cpp
+ Author(s):      Gajamohan Mohanarajah/Francisco Ramos
+ Affiliation:    IDSC - ETH Zurich
+ e-mail:         gajan@ethz.ch/framosde@ethz.ch
+ Start date:	    7th April 2011
+ Last update:    11th May 2011
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -24,105 +24,105 @@
  *   Suite 330, Boston, MA  02111-1307  USA                                *
  *                                                                         *
  ***************************************************************************/
-
 #include "TrajectoryGenerator.hpp"
 #include <ocl/Component.hpp>
-
-ORO_CREATE_COMPONENT_TYPE();
+ORO_CREATE_COMPONENT_TYPE()
+;
 ORO_LIST_COMPONENT_TYPE(trajectory_generator::TrajectoryGenerator);
 
 namespace trajectory_generator
 {
-    using namespace RTT;
-    using namespace KDL;
-    using namespace std;
+using namespace RTT;
+using namespace KDL;
+using namespace std;
 
-    TrajectoryGenerator::TrajectoryGenerator(std::string name)
-        : TaskContext(name,PreOperational)
-    {
-        //Creating TaskContext
+TrajectoryGenerator::TrajectoryGenerator(std::string name) :
+		TaskContext(name, PreOperational)
+{
+	//Creating TaskContext
 
-        //Adding InputPorts
+	//Adding InputPorts
 
-        this->addEventPort("JointPositionInput",input_jntPosPort, boost::bind(&TrajectoryGenerator::generateNewVelocityProfilesJntPosInput, this, _1));
-        this->addPort("JointPositionMsr",msr_jntPosPort);
+	this->addEventPort("JointPositionInput", input_jntPosPort,
+											boost::bind(&TrajectoryGenerator::generateNewVelocityProfilesJntPosInput, this, _1));
+	this->addPort("JointPositionMsr", msr_jntPosPort);
 
-        //Adding OutputPorts
-        this->addPort("JointPositionDes",output_jntPosPort);
-        this->addPort("JointPositionDesToROS",output_jntPosPort_toROS);
+	//Adding OutputPorts
+	this->addPort("JointPositionDes", output_jntPosPort);
+	this->addPort("JointPositionDesToROS", output_jntPosPort_toROS);
 
-        //Adding Properties
-        this->addProperty("num_axes",num_axes).doc("Number of Axes");
-        this->addProperty("max_jntPos",p_max).doc("The maximum joint position of each joint (rad)");
-        this->addProperty("min_jntPos",p_min).doc("The minimum joint position of each joint (rad)");
-        this->addProperty("max_vel",v_max).doc("Maximum Velocity in Trajectory");
-        this->addProperty("max_acc",a_max).doc("Maximum Acceleration in Trajectory");
+	//Adding Properties
+	this->addProperty("num_axes", num_axes).doc("Number of Axes");
+	this->addProperty("max_jntPos", p_max).doc("The maximum joint position of each joint (rad)");
+	this->addProperty("min_jntPos", p_min).doc("The minimum joint position of each joint (rad)");
+	this->addProperty("max_vel", v_max).doc("Maximum Velocity in Trajectory");
+	this->addProperty("max_acc", a_max).doc("Maximum Acceleration in Trajectory");
 
-        this->addProperty("doSync",doSync).doc("Do synchronization");
-        this->addProperty("addFinalVel",addFinalVel).doc("Incorporate final velocities");
+	this->addProperty("doSync", doSync).doc("Do synchronization");
+	this->addProperty("addFinalVel", addFinalVel).doc("Incorporate final velocities");
 
-        this->addOperation("updateTG", &TrajectoryGenerator::updateTG, this, OwnThread);
+	this->addOperation("updateTG", &TrajectoryGenerator::updateTG, this, OwnThread);
 
-        lastCommandedPoseJntPos = std::vector<double>(7,0.0);
-        lastCommandedPoseJntVel = std::vector<double>(7,0.0);
-        jntPos = std::vector<double>(7,0.0);
-        jntVel = std::vector<double>(7,0.0);
+	lastCommandedPoseJntPos = std::vector<double>(7, 0.0);
+	lastCommandedPoseJntVel = std::vector<double>(7, 0.0);
+	jntPos = std::vector<double>(7, 0.0);
+	jntVel = std::vector<double>(7, 0.0);
 
-        jntState.header.frame_id = "arm_0_link";
-        jntState.name.push_back("arm_1_joint");
-        jntState.name.push_back("arm_2_joint");
-        jntState.name.push_back("arm_3_joint");
-        jntState.name.push_back("arm_4_joint");
-        jntState.name.push_back("arm_5_joint");
-        jntState.name.push_back("arm_6_joint");
-        jntState.name.push_back("arm_7_joint");
+	jntState.header.frame_id = "arm_0_link";
+	jntState.name.push_back("arm_1_joint");
+	jntState.name.push_back("arm_2_joint");
+	jntState.name.push_back("arm_3_joint");
+	jntState.name.push_back("arm_4_joint");
+	jntState.name.push_back("arm_5_joint");
+	jntState.name.push_back("arm_6_joint");
+	jntState.name.push_back("arm_7_joint");
 
-        timeLogger.open("timeLog.txt");
+	timeLogger.open("timeLog.txt");
 
-    }
+}
 
-    TrajectoryGenerator::~TrajectoryGenerator()
-    {
-    }
+TrajectoryGenerator::~TrajectoryGenerator()
+{
+}
 
-	int TrajectoryGenerator::jntVelScaling(sensor_msgs::JointState (&robotState))
+int TrajectoryGenerator::jntVelScaling(sensor_msgs::JointState (&robotState))
+{
+	std::vector<double> vM(7, 0.0);
+	std::vector<double> scale(7, 1.0);
+	double p_left, p_right;
+	unsigned int i;
+
+	for (i = 0; i < robotState.velocity.size(); i++)
 	{
-		std::vector<double> vM (7,0.0);
-		std::vector<double> scale (7,1.0);
-		double p_left, p_right;
-		unsigned int i;
+		// Limits for applying constant velocity limit or curve
+		p_left = p_min[i] + 0.5 * v_max[i] * v_max[i] / a_max[i];
+		p_right = p_max[i] - 0.5 * v_max[i] * v_max[i] / a_max[i];
+		// Left phase-plane constraint
+		if (robotState.position[i] < p_left)
+			vM[i] = sign(robotState.velocity[i]) * (sqrt(2 * (p_left - p_min[i]) * a_max[i]));
 
-		for(i=0 ; i<robotState.velocity.size() ; i++)
+		// Constant Velocity Limits
+		else if (robotState.position[i] < p_right)
+			vM[i] = sign(robotState.velocity[i]) * v_max[i];
+
+		// Right phase-plane constraint
+		else
+			vM[i] = sign(robotState.velocity[i]) * (sqrt(2 * (p_max[i] - p_right) * a_max[i]));
+
+		// If the requested velocity is higher than maximum, we calculate the scaling factor
+		if (abs(robotState.velocity[i]) > abs(vM[i]))
 		{
-			// Limits for applying constant velocity limit or curve
-			p_left = p_min[i] + 0.5*v_max[i]*v_max[i]/a_max[i];
-			p_right = p_max[i] - 0.5*v_max[i]*v_max[i]/a_max[i];
-			// Left phase-plane constraint
-			if (robotState.position[i] < p_left)
-				vM[i] = sign(robotState.velocity[i])*(sqrt(2*(p_left - p_min[i])*a_max[i]));
-
-			// Constant Velocity Limits
-			else if (robotState.position[i] < p_right)
-				vM[i] = sign(robotState.velocity[i])*v_max[i];
-
-			// Right phase-plane constraint
-			else
-				vM[i] = sign(robotState.velocity[i])*(sqrt(2*(p_max[i] - p_right)*a_max[i]));
-
-			// If the requested velocity is higher than maximum, we calculate the scaling factor
-			if (abs(robotState.velocity[i]) > abs(vM[i]))
-			{
-				scale[i] = robotState.velocity[i]/vM[i];
-				cout << "The requested velocity is higher than it should. Rescaling from "
-						<< robotState.velocity[i] << " to " << vM[i] << " by a factor " << scale[i] << endl;
-			}
+			scale[i] = robotState.velocity[i] / vM[i];
+			cout << "The requested velocity is higher than it should. Rescaling from " << robotState.velocity[i] << " to "
+					<< vM[i] << " by a factor " << scale[i] << endl;
 		}
+	}
 
-		// Find maximum scale
-		double scaleM = 1.0;
-		for(i=0 ; i<scale.size() ; i++)
-			if (scale[i]>scaleM)
-				scaleM = scale[i];
+	// Find maximum scale
+	double scaleM = 1.0;
+	for (i = 0; i < scale.size(); i++)
+		if (scale[i] > scaleM)
+			scaleM = scale[i];
 
 //		// See when the velocities have to be scaled
 //		cout << "vel:  " ;
@@ -147,178 +147,180 @@ namespace trajectory_generator
 //
 //		cout << "scale:" << scaleM << endl;
 
+// Recalculate velocities in the Robot Space if the scale factor is greater than one
+	if (scaleM > 1.0)
+	{
+		for (i = 0; i < robotState.velocity.size(); i++)
+			robotState.velocity[i] /= scaleM;
 
-		// Recalculate velocities in the Robot Space if the scale factor is greater than one
-		if (scaleM > 1.0)
+		return 1;
+	}
+	else
+		return 0;
+
+	// We never should reach this point
+	return -1;
+}
+
+bool TrajectoryGenerator::configureHook()
+{
+	//num_axes = num_axes_prop.rvalue();
+	//TODO:check if dimensions of v_max and a_max match num_axes
+
+	//v_max = v_max_property.rvalue();
+	//a_max = a_max_property.rvalue();
+
+	//log(Info) << "nAxes = " << num_axes << endlog();
+
+	return true;
+
+}
+
+bool TrajectoryGenerator::startHook()
+{
+	if (doSync == true && addFinalVel == true)
+	{
+		doSync = false;
+		cout << "Sync with non zero final velocities is not yet implemented" << endl;
+	}
+	std::cout << "TrajectoryGenerator::Trajectory generator running" << std::endl;
+
+	return true;
+}
+
+bool TrajectoryGenerator::generateNewVelocityProfilesJntPosInput(RTT::base::PortInterface* portInterface)
+{
+	//Create joint specific velocity profiles
+	maxDuration = 0.0;
+	double p_aux = 0.0;
+
+	time_passed = os::TimeService::Instance()->secondsSince(time_begin);
+
+#if DEBUG
+	cout << "a new jnt pose arrived" << endl;
+#endif
+	input_jntPosPort.read(cmdJntState);
+
+	jntVelScaling(cmdJntState);
+
+	lastCommandedPoseJntPos = cmdJntState.position;
+	lastCommandedPoseJntVel = cmdJntState.velocity;
+
+	for (int i = 0; i < 7; i++)
+	{
+		if (lastCommandedPoseJntPos[i] < p_min[i] || lastCommandedPoseJntPos[i] > p_max[i])
 		{
-			for(i=0 ; i<robotState.velocity.size() ; i++)
-				robotState.velocity[i] /= scaleM;
-
-
-
-			return 1;
+			//log(Info) << "Commanded joint position out of bounds" << endlog();
+			cout << "Commanded joint position out of bounds " << lastCommandedPoseJntPos[i] << endl;
+			return false;
 		}
-		else
-			return 0;
 
-		// We never should reach this point
-		return -1;
+		// We see if the final state is reachable within the kinematic limits
+		// First we calculate the margin of position that we have
+		p_aux = min(abs(lastCommandedPoseJntPos[i] - p_min[i]), abs(p_max[i] - lastCommandedPoseJntPos[i]));
+		// Then, if the motion due to deceleration/acceleration needed to stop_the_robot/reach_the_final_vel
+		// is higher than the distance that we have to the position limits, final state cannot be achieved
+		if (p_aux < 0.5 * lastCommandedPoseJntVel[i] * lastCommandedPoseJntVel[i] / a_max[i])
+		{
+			cout << "Commanded final velocity out of bounds " << lastCommandedPoseJntVel[i] << endl;
+			return false;
+		}
 	}
 
-
-    bool TrajectoryGenerator::configureHook()
-    {
-    	//num_axes = num_axes_prop.rvalue();
-    	//TODO:check if dimensions of v_max and a_max match num_axes
-
-    	//v_max = v_max_property.rvalue();
-    	//a_max = a_max_property.rvalue();
-
-    	//log(Info) << "nAxes = " << num_axes << endlog();
-
-    	return true;
-
-    }
-
-    bool TrajectoryGenerator::startHook()
-    {
-		if(doSync==true && addFinalVel==true){
-			doSync = false;
-			cout << "Sync with non zero final velocities is not yet implemented" << endl;
+	if ((int)motionProfile.size() == 0)
+	{ //Only for the first run
+		for (int i = 0; i < (int)num_axes; i++)
+		{
+			jntVel[i] = 0.0;
+			msr_jntPosPort.read(jntPos);
 		}
-    	std::cout << "TrajectoryGenerator::Trajectory generator running" << std::endl;
+	}
+	else
+	{
+		for (int i = 0; i < (int)motionProfile.size(); i++)
+		{
+			jntVel[i] = motionProfile[i].Vel(time_passed);
+			jntPos[i] = motionProfile[i].Pos(time_passed);
+		}
+	}
 
-    	return true;
-    }
+	motionProfile.clear();
 
+	//TODO: Check dimensions
+	for (int i = 0; i < (int)lastCommandedPoseJntPos.size(); i++)
+	{
+		motionProfile.push_back(VelocityProfile_NonZeroInit(v_max[i], a_max[i]));
+		if (!addFinalVel)
+			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i]);
+		else
+			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i], lastCommandedPoseJntVel[i]);
+		if (motionProfile[i].Duration() > maxDuration)
+			maxDuration = motionProfile[i].Duration();
+	}
 
+	timeLogger << maxDuration << endl;
 
-    bool TrajectoryGenerator::generateNewVelocityProfilesJntPosInput(RTT::base::PortInterface* portInterface)
-    {
-    	//Create joint specific velocity profiles
-    	maxDuration = 0.0;
-    	double p_aux = 0.0;
+	//Do sync
+	if (doSync)
+	{
+		for (int i = 0; i < (int)lastCommandedPoseJntPos.size(); i++)
+		{
+			motionProfile[i].SetProfileDuration(maxDuration);
+		}
+	}
 
-    	time_passed = os::TimeService::Instance()->secondsSince(time_begin);
-
+	//Set times
+	time_begin = os::TimeService::Instance()->getTicks();
 #if DEBUG
-    	cout << "a new jnt pose arrived" << endl;
+	cout << "A new set of motion profiles were successfully created." << endl;
 #endif
-    	input_jntPosPort.read(cmdJntState);
+	return true;
 
-    	jntVelScaling(cmdJntState);
+}
 
-    	lastCommandedPoseJntPos = cmdJntState.position;
-    	lastCommandedPoseJntVel = cmdJntState.velocity;
-
-
-    	for(int i=0; i < 7; i++){
-    		if(lastCommandedPoseJntPos[i]<p_min[i] || lastCommandedPoseJntPos[i]>p_max[i]){
-    			//log(Info) << "Commanded joint position out of bounds" << endlog();
-    			cout << "Commanded joint position out of bounds " << lastCommandedPoseJntPos[i] << endl;
-    			return false;
-    		}
-
-    		// We see if the final state is reachable within the kinematic limits
-    		// First we calculate the margin of position that we have
-    		p_aux = min(abs(lastCommandedPoseJntPos[i]-p_min[i]),abs(p_max[i]-lastCommandedPoseJntPos[i]));
-    		// Then, if the motion due to deceleration/acceleration needed to stop_the_robot/reach_the_final_vel
-    		// is higher than the distance that we have to the position limits, final state cannot be achieved
-    		if (p_aux < 0.5*lastCommandedPoseJntVel[i]*lastCommandedPoseJntVel[i]/a_max[i]){
-    			cout << "Commanded final velocity out of bounds " << lastCommandedPoseJntVel[i] << endl;
-    			return false;
-    		}
-    	}
-
-
-    	if ((int)motionProfile.size() == 0){//Only for the first run
-    		for(int i = 0; i < (int)num_axes; i++)
-			{
-    			jntVel[i] = 0.0;
-    			msr_jntPosPort.read(jntPos);
-    		}
-    	}else{
-    		for(int i = 0; i < (int)motionProfile.size(); i++)
-    		{
-    			jntVel[i] = motionProfile[i].Vel(time_passed);
-    			jntPos[i] = motionProfile[i].Pos(time_passed);
- 	   		}
-     	}
-
-    	motionProfile.clear();
-
-    	//TODO: Check dimensions
-    	for(int i = 0; i < (int)lastCommandedPoseJntPos.size(); i++){
-    		motionProfile.push_back(VelocityProfile_NonZeroInit(v_max[i], a_max[i]));
-    		if(!addFinalVel)
-    			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i]);
-    		else
-    			motionProfile[i].SetProfile(jntPos[i], lastCommandedPoseJntPos[i], jntVel[i], lastCommandedPoseJntVel[i]);
-    		if(motionProfile[i].Duration() > maxDuration )
-    			maxDuration = motionProfile[i].Duration();
-    	}
-
-    	timeLogger << maxDuration << endl;
-
-    	//Do sync
-    	if(doSync){
-			for(int i = 0; i < (int)lastCommandedPoseJntPos.size(); i++){
-				motionProfile[i].SetProfileDuration(maxDuration);
-			}
-    	}
-
-    	//Set times
-    	time_begin = os::TimeService::Instance()->getTicks();
+bool TrajectoryGenerator::updateTG(void)
+{
+	if (motionProfile.size() == 7)
+	{
+		time_passed = os::TimeService::Instance()->secondsSince(time_begin);
+		log(Info) << time_passed << endlog();
+		jntPosCmd.clear();
+		jntState.position.clear();
+		jntState.header.stamp = ros::Time::now();
+		for (int i = 0; i < (int)motionProfile.size(); i++)
+		{
+			jntPosCmd.push_back(motionProfile[i].Pos(time_passed));
+			jntState.position.push_back(motionProfile[i].Pos(time_passed));
+		}
+		output_jntPosPort_toROS.write(jntState);
 #if DEBUG
-    	cout << "A new set of motion profiles were successfully created." << endl;
+		log(Info) << jntPosCmd[0] << " " << jntPosCmd[1] << " " << jntPosCmd[2] << " "
+		<< jntPosCmd[3] << " " << jntPosCmd[4] << " " << jntPosCmd[5] << " "
+		<< jntPosCmd[6] << endlog();
 #endif
-    	return true;
+		output_jntPosPort.write(jntPosCmd);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
-    }
+void TrajectoryGenerator::updateHook()
+{
+	updateTG();
+}
 
+void TrajectoryGenerator::stopHook()
+{
+	timeLogger.close();
+}
 
-    bool TrajectoryGenerator::updateTG(void){
-    	if (motionProfile.size()==7){
-			time_passed = os::TimeService::Instance()->secondsSince(time_begin);
-			log(Info) << time_passed << endlog();
-			jntPosCmd.clear();
-			jntState.position.clear();
-			jntState.header.stamp = ros::Time::now();
-			for(int i = 0; i < (int)motionProfile.size(); i++){
-				jntPosCmd.push_back(motionProfile[i].Pos(time_passed));
-				jntState.position.push_back(motionProfile[i].Pos(time_passed));
-			}
-			output_jntPosPort_toROS.write(jntState);
-#if DEBUG
-			log(Info) << jntPosCmd[0] << " " << jntPosCmd[1] << " " << jntPosCmd[2] << " "
-										<< jntPosCmd[3] << " " << jntPosCmd[4] << " " << jntPosCmd[5] << " "
-										<< jntPosCmd[6] << endlog();
-#endif
-			output_jntPosPort.write(jntPosCmd);
-			return true;
-    	}else{
-    		return false;
-    	}
-    }
+void TrajectoryGenerator::cleanupHook()
+{
 
+}
 
-    void TrajectoryGenerator::updateHook()
-    {
-    	updateTG();
-    }
-
-
-    void TrajectoryGenerator::stopHook()
-    {
-    	timeLogger.close();
-    }
-
-    void TrajectoryGenerator::cleanupHook()
-    {
-
-    }
-
-}//namespace
-
-
+} //namespace
 
